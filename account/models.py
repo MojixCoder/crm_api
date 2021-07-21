@@ -135,7 +135,6 @@ class User(AbstractUser):
         to_repr = self.username
         if self.first_name and self.last_name:
             to_repr = self.get_full_name()
-            self.get_short_name
         return to_repr
     
     def get_absolute_url(self):
