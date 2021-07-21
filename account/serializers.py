@@ -1,7 +1,6 @@
 from .models import User
 from typing import Optional
 from rest_framework import serializers
-from drf_spectacular.extensions import OpenApiAuthenticationExtension
 
 
 class UserListSerializer(serializers.ModelSerializer):

@@ -12,8 +12,6 @@ from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiPara
 from .models import User
 from .serializers import UserRetrieveSerializer, UserListSerializer, UserCreateSerializer, UserUpdateSerializer
 
-import os
-
 
 @extend_schema_view(
     list=extend_schema(
