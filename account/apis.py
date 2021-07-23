@@ -1,3 +1,5 @@
+from django.http import Http404
+
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,8 +11,8 @@ from rest_framework_simplejwt import exceptions
 
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter, OpenApiTypes, OpenApiResponse
 
-from .models import User
 from .serializers import UserRetrieveSerializer, UserListSerializer, UserCreateSerializer, UserUpdateSerializer
+from .cache import user_cache_manager
 
 
 @extend_schema_view(
@@ -78,11 +80,11 @@ from .serializers import UserRetrieveSerializer, UserListSerializer, UserCreateS
 class UserViewSet(ModelViewSet):
     """ User Model View Set """
     
-    queryset = User.objects.all()
     http_method_names = ["get", "put", "post",]
     lookup_field = "username"
-    # permission_classes = [AllowAny,]
+    permission_classes = [AllowAny,]
     lookup_url_kwarg = "username"
+    
     
     def get_serializer_class(self):
         
@@ -101,12 +103,15 @@ class UserViewSet(ModelViewSet):
         
         return UserListSerializer
     
+    def get_queryset(self):
+        #TODO Add filtering
+        return user_cache_manager.get_all()
+    
     def get_object(self):
         username = self.kwargs[self.lookup_url_kwarg]
-        try:
-            user = User.objects.prefetch_related("permissions").get(username=username)
-        except User.DoesNotExist:
-            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        user = user_cache_manager.get(key="username", value=username)
+        if not user:
+            raise Http404
         self.check_object_permissions(self.request, obj=user)
         return user
     

@@ -21,17 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-^hwkubohup0w393(t2$$(7i)-k_1*0f^6@81@@ec&q(en7h==z")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = int(os.getenv("DEBUG"))
+DEBUG = int(os.getenv("DEBUG", 1))
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(" ")
 
 
-# Change it in production
-
-BASE_URL = os.getenv("BASE_URL")
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
 # Application definition
 
@@ -89,14 +87,14 @@ WSGI_APPLICATION = 'crm.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv("DB_ENGINE"),
-        'NAME': os.getenv("DB_NAME"), 
-        'USER': os.getenv("DB_USER"), 
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"), 
-        'PORT': os.getenv("DB_PORT"),
+        'ENGINE': os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+        'NAME': os.getenv("DB_NAME", "crm"), 
+        'USER': os.getenv("DB_USER", "postgres"), 
+        'PASSWORD': os.getenv("DB_PASSWORD", "pawndarby"),
+        'HOST': os.getenv("DB_HOST", "127.0.0.1"), 
+        'PORT': os.getenv("DB_PORT", "5432"),
         'TEST': {
-            'NAME': os.getenv("TEST_DB_NAME"),
+            'NAME': os.getenv("TEST_DB_NAME", "crm_test"),
         },
     }
 }
@@ -213,3 +211,20 @@ SPECTACULAR_SETTINGS = {
     },
     'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
 }
+
+# Cache
+
+#TODO Add redis to docker-compose
+#TODO Edit this when redis is added to docker-compose
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
