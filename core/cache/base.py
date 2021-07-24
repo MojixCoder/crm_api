@@ -11,7 +11,7 @@ class BaseCacheManager(Generic[ModelType]):
     cache_key: Optional[str] = None
     cached_related_objects: Optional[List[str]] = None
     cached_prefetch_related_objects: Optional[List[str]] = None
-    list_timeout: Optional[int] = None
+    list_timeout: Optional[int] = 86400 # Equals to 1 day
     detail_timeout: Optional[int] = 60
     
     
@@ -71,20 +71,24 @@ class BaseCacheManager(Generic[ModelType]):
         """
         try:
             dict_ = {key: value}
-            queryset = self.model.objects.get(**dict_)
-            if self.cached_related_objects and self.cached_prefetch_related_objects:
-                queryset = self.model.objects.select_related(
-                    *self.cached_related_objects
-                ).prefetch_related(*self.cached_prefetch_related_objects).get(**dict_)
-            elif self.cached_related_objects:
-                queryset = self.model.objects.select_related(*self.cached_related_objects).get(**dict_)
-            elif self.cached_prefetch_related_objects:
-                queryset = self.model.objects.prefetch_related(*self.cached_prefetch_related_objects).get(**dict_)
-            obj = cache.get_or_set(
-                self.get_detail_cache_key(queryset.id),
-                queryset,
-                timeout=self.detail_timeout,
-            )
+            obj = cache.get(self.get_detail_cache_key(value))
+            if obj:
+                return obj
+            else:
+                obj = self.model.objects.get(**dict_)
+                if self.cached_related_objects and self.cached_prefetch_related_objects:
+                    obj = self.model.objects.select_related(
+                        *self.cached_related_objects
+                    ).prefetch_related(*self.cached_prefetch_related_objects).get(**dict_)
+                elif self.cached_related_objects:
+                    obj = self.model.objects.select_related(*self.cached_related_objects).get(**dict_)
+                elif self.cached_prefetch_related_objects:
+                    obj = self.model.objects.prefetch_related(*self.cached_prefetch_related_objects).get(**dict_)
+                cache.set(
+                    self.get_detail_cache_key(value),
+                    obj,
+                    timeout=self.detail_timeout,
+                )
         except self.model.DoesNotExist:
             obj = None
         return obj

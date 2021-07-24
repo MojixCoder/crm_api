@@ -11,6 +11,7 @@ from rest_framework_simplejwt import exceptions
 
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter, OpenApiTypes, OpenApiResponse
 
+from core.cache.decorators import post_create_clear_cache, post_update_clear_cache
 from .serializers import UserRetrieveSerializer, UserListSerializer, UserCreateSerializer, UserUpdateSerializer
 from .cache import user_cache_manager
 
@@ -113,6 +114,15 @@ class UserViewSet(ModelViewSet):
         if not user:
             raise Http404
         self.check_object_permissions(self.request, obj=user)
+        return user
+    
+    @post_create_clear_cache(key=user_cache_manager.get_list_cache_key())
+    def perform_create(self, serializer):
+        return super().perform_create(serializer)
+    
+    @post_update_clear_cache(manager=user_cache_manager)
+    def perform_update(self, serializer):
+        user = serializer.save()
         return user
     
     @action(
